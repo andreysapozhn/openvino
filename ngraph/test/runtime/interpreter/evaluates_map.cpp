@@ -69,6 +69,11 @@
 #include <ngraph/runtime/reference/squared_difference.hpp>
 #include <ngraph/runtime/reference/tensor_iterator.hpp>
 
+#include <ngraph/runtime/reference/sigmoid.hpp>
+#include <ngraph/runtime/reference/exp.hpp>
+#include <ngraph/runtime/reference/tanh.hpp>
+#include <ngraph/runtime/reference/log.hpp>
+
 using namespace ngraph;
 using namespace std;
 
@@ -2536,6 +2541,54 @@ namespace
     {
         const auto equation = op->get_equation();
         runtime::reference::einsum(outputs, inputs, equation);
+        return true;
+    }
+
+    template <element::Type_t ET>
+    bool evaluate(const shared_ptr<op::v0::Sigmoid>& op,
+                  const HostTensorVector& outputs,
+                  const HostTensorVector& inputs)
+    {
+        using T = typename element_type_traits<ET>::value_type;
+        runtime::reference::sigmoid<T>(inputs[0]->get_data_ptr<T>(),
+                                       outputs[0]->get_data_ptr<T>(),
+                                       shape_size(inputs[0]->get_shape()));
+        return true;
+    }
+
+    template <element::Type_t ET>
+    bool evaluate(const shared_ptr<op::v0::Exp>& op,
+                  const HostTensorVector& outputs,
+                  const HostTensorVector& inputs)
+    {
+        using T = typename element_type_traits<ET>::value_type;
+        runtime::reference::exp<T>(inputs[0]->get_data_ptr<T>(),
+                                   outputs[0]->get_data_ptr<T>(),
+                                   shape_size(inputs[0]->get_shape()));
+        return true;
+    }
+
+    template <element::Type_t ET>
+    bool evaluate(const shared_ptr<op::v0::Tanh>& op,
+                  const HostTensorVector& outputs,
+                  const HostTensorVector& inputs)
+    {
+        using T = typename element_type_traits<ET>::value_type;
+        runtime::reference::tanh<T>(inputs[0]->get_data_ptr<T>(),
+                                    outputs[0]->get_data_ptr<T>(),
+                                    shape_size(inputs[0]->get_shape()));
+        return true;
+    }
+
+    template <element::Type_t ET>
+    bool evaluate(const shared_ptr<op::v0::Log>& op,
+                  const HostTensorVector& outputs,
+                  const HostTensorVector& inputs)
+    {
+        using T = typename element_type_traits<ET>::value_type;
+        runtime::reference::log<T>(inputs[0]->get_data_ptr<T>(),
+                                   outputs[0]->get_data_ptr<T>(),
+                                   shape_size(inputs[0]->get_shape()));
         return true;
     }
 
