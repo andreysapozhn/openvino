@@ -217,19 +217,20 @@ void GNAPlugin::ExportScores(void *ptr_dst,
     // source scores are possibly padded to multiple of 8 and possibly interleaved
     // rotate if necessary and only copy actual scores (not padding)
     if (orientation == kDnnInterleavedOrientation) {
-        if (num_bytes_per_element == 2) {
+        // if (num_bytes_per_element == 2) {
+        //     int16_t *dst = reinterpret_cast<int16_t *>(ptr_dst);
+        //     const int16_t *src = reinterpret_cast<const int16_t *>(ptr_src);
+        //     for (uint32_t i = 0; i < num_frames; i++) {
+        //         for (uint32_t j = 0; j < num_active_elements; j++) {
+        //             dst[i * num_vector_elements + j] = src[j * num_group + i];
+        //         }
+        //         for (uint32_t j = num_active_elements; j < num_vector_elements; j++) {
+        //             dst[i * num_vector_elements + j] = 0;
+        //         }
+        //     }
+        // } else if (num_bytes_per_element == 4) {  // should work for both int and float
+            // int32_t *dst = reinterpret_cast<int32_t *>(ptr_dst);
             int16_t *dst = reinterpret_cast<int16_t *>(ptr_dst);
-            const int16_t *src = reinterpret_cast<const int16_t *>(ptr_src);
-            for (uint32_t i = 0; i < num_frames; i++) {
-                for (uint32_t j = 0; j < num_active_elements; j++) {
-                    dst[i * num_vector_elements + j] = src[j * num_group + i];
-                }
-                for (uint32_t j = num_active_elements; j < num_vector_elements; j++) {
-                    dst[i * num_vector_elements + j] = 0;
-                }
-            }
-        } else if (num_bytes_per_element == 4) {  // should work for both int and float
-            int32_t *dst = reinterpret_cast<int32_t *>(ptr_dst);
             const int8_t *src = reinterpret_cast<const int8_t*>(ptr_src);
             for (uint32_t i = 0; i < num_frames; i++) {
                 for (uint32_t j = 0; j < num_active_elements; j++) {
@@ -257,9 +258,9 @@ void GNAPlugin::ExportScores(void *ptr_dst,
                     dst[i * num_vector_elements + j] = 0;
                 }
             }
-        } else {
-            THROW_GNA_EXCEPTION << "Unsupported target precision for infer : " << num_bytes_per_element << "bytes";
-        }
+        // } else {
+        //     THROW_GNA_EXCEPTION << "Unsupported target precision for infer : " << num_bytes_per_element << "bytes";
+        // }
     } else {
         if (num_bytes_per_element == 2) {
             for (uint32_t i = 0; i < num_frames; i++) {
@@ -1387,7 +1388,8 @@ GnaWaitStatus GNAPlugin::WaitFor(uint32_t request_idx, int64_t millisTimeout) {
                         elementsPerBatch,
                         elementsPerBatch,
                         outputDesc.num_bytes_per_element,
-                        sizeof(float));
+                        // sizeof(float));
+                        sizeof(int16_t));
 
         if (gnadevice) {
 #ifdef PLOT
@@ -1399,11 +1401,11 @@ GnaWaitStatus GNAPlugin::WaitFor(uint32_t request_idx, int64_t millisTimeout) {
             num_infers++;
             if (f) {
                 if (isScalar) {
-                    fprintf(f, "%d ", outputBlob->cbuffer().as<int32_t*>()[0]);
+                    fprintf(f, "%d ", outputBlob->cbuffer().as<int16_t*>()[0]);
                 } else {
                     for (int i = 0; i < batchSize; i++) {
                         for (int j = 0; j < dims[dims.size() - 1]; j++) {
-                            fprintf(f, "%d ", outputBlob->cbuffer().as<int32_t*>()[dims[dims.size() - 1] * i + j]);
+                            fprintf(f, "%d ", outputBlob->cbuffer().as<int16_t*>()[dims[dims.size() - 1] * i + j]);
                         }
                         fprintf(f, "\n");
                     }
@@ -1411,11 +1413,23 @@ GnaWaitStatus GNAPlugin::WaitFor(uint32_t request_idx, int64_t millisTimeout) {
                 fprintf(f, "\n\n");
             }
 #endif
-            ConvertToFloat(outputBlob->buffer(),
-                outputBlob->buffer(),
-                elementsPerBatch,
-                batchSize,
-                outputDesc.scale_factor);
+            // ConvertToFloat(outputBlob->buffer(),
+            //     outputBlob->buffer(),
+            //     elementsPerBatch,
+            //     batchSize,
+            //     outputDesc.scale_factor);
+
+            // ConvertToInt16(outputBlob->buffer(),
+            //     outputBlob->buffer(),
+            //     elementsPerBatch,
+            //     batchSize,
+            //     outputDesc.scale_factor);
+
+            ConvertInt32ToInt16(outputBlob->buffer(),
+                                outputBlob->buffer(),
+                                elementsPerBatch,
+                                batchSize,
+                                outputDesc.scale_factor);
 #ifdef PLOT
             if (f) {
                 if (isScalar) {
@@ -1424,7 +1438,8 @@ GnaWaitStatus GNAPlugin::WaitFor(uint32_t request_idx, int64_t millisTimeout) {
                     auto dims = outputBlob->getTensorDesc().getDims();
                     for (int i = 0; i < batchSize; i++) {
                         for (int j = 0; j < dims[dims.size() - 1]; j++) {
-                            fprintf(f, "%.2f ", outputBlob->cbuffer().as<float*>()[dims[dims.size() - 1] * i + j]);
+                            // fprintf(f, "%.2f ", outputBlob->cbuffer().as<float*>()[dims[dims.size() - 1] * i + j]);
+                            fprintf(f, "%d ", outputBlob->cbuffer().as<int16_t*>()[dims[dims.size() - 1] * i + j]);
                         }
                         fprintf(f, "\n");
                     }

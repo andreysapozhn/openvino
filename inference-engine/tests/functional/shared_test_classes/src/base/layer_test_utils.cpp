@@ -20,6 +20,9 @@
 #include "shared_test_classes/base/layer_test_utils.hpp"
 #include "functional_test_utils/core_config.hpp"
 
+#include "transformations/utils/utils.hpp"
+#include "ie_ngraph_utils.hpp"
+
 namespace LayerTestsUtils {
 
 LayerTestsCommon::LayerTestsCommon() : threshold(1e-2f) {
@@ -46,6 +49,11 @@ void LayerTestsCommon::Run() {
     }
 
     try {
+    //     std::map<std::string, std::string> configs = {
+    //         {"GNA_DEVICE_MODE", "GNA_SW_FP32"}
+    //         // {"GNA_DEVICE_MODE", "GNA_HW"}
+    //     };
+    //     configuration.insert(configs.begin(), configs.end());
         LoadNetwork();
         GenerateInputs();
         Infer();
@@ -306,10 +314,28 @@ void LayerTestsCommon::ConfigureNetwork() {
 }
 
 void LayerTestsCommon::LoadNetwork() {
+    // cnnNetwork = InferenceEngine::CNNNetwork{function};
+    // CoreConfiguration(this);
+    // ConfigureNetwork();
+    // for (auto& item : cnnNetwork.getOutputsInfo()) {
+    //     item.second->setPrecision(InferenceEngine::Precision::I16);
+    // }
+    // executableNetwork = core->LoadNetwork(cnnNetwork, targetDevice, configuration);
+    // InferenceEngine::CNNNetwork cnnNetwork(function);
     cnnNetwork = InferenceEngine::CNNNetwork{function};
     CoreConfiguration(this);
     ConfigureNetwork();
-    executableNetwork = core->LoadNetwork(cnnNetwork, targetDevice, configuration);
+    auto inputInfo = cnnNetwork.getInputsInfo();
+    auto outputInfo = cnnNetwork.getOutputsInfo();
+    for (const auto& param : function->get_parameters()) {
+        inputInfo[param->get_friendly_name()]->setPrecision(InferenceEngine::details::convertPrecision(param->get_element_type()));
+    }
+    for (const auto& result : function->get_results()) {
+        outputInfo[ngraph::op::util::create_ie_output_name(result->input_value(0))]->setPrecision(
+            InferenceEngine::details::convertPrecision(result->get_element_type()));
+    }
+    auto outputInfoNew = cnnNetwork.getOutputsInfo();
+    executableNetwork = core->LoadNetwork(cnnNetwork, targetDevice);
 }
 
 void LayerTestsCommon::GenerateInputs() {

@@ -3,6 +3,7 @@
 //
 
 #include "shared_test_classes/single_layer/activation.hpp"
+#include <ngraph/pass/visualize_tree.hpp>
 
 namespace LayerTestsDefinitions {
 
@@ -39,6 +40,7 @@ void ActivationLayerTest::SetUp() {
     activationType = activationDecl.first;
     auto constantsValue = activationDecl.second;
     auto ngPrc = FuncTestUtils::PrecisionUtils::convertIE2nGraphPrc(netPrecision);
+    // auto ngPrc_fp32 = FuncTestUtils::PrecisionUtils::convertIE2nGraphPrc(InferenceEngine::Precision::FP32);
     auto params = ngraph::builder::makeParams(ngPrc, {shapes.first});
     params[0]->set_friendly_name("Input");
 
@@ -51,6 +53,8 @@ void ActivationLayerTest::SetUp() {
     auto activation = ngraph::builder::makeActivation(params[0], ngPrc, activationType, shapes.second, constantsValue);
 
     function = std::make_shared<ngraph::Function>(ngraph::NodeVector{activation}, params);
+
+    // ngraph::pass::VisualizeTree("after.dot").run_on_function(function);
 }
 
 InferenceEngine::Blob::Ptr ActivationLayerTest::GenerateInput(const InferenceEngine::InputInfo &info) const {

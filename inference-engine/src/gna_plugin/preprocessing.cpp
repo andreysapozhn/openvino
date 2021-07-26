@@ -55,3 +55,32 @@ void GNAPluginNS::ConvertToFloat(float *ptr_dst,
         }
     }
 }
+
+void GNAPluginNS::ConvertInt32ToInt16(int16_t *ptr_dst,
+                                      int16_t *ptr_src,
+                                      const uint32_t num_rows,
+                                      const uint32_t num_columns,
+                                      const float scale_factor) {
+    if (!ptr_dst || !ptr_src) {
+        return;
+    }
+    // for (uint32_t i = 0; i < num_rows; i++) {
+        // int32_t *ptr_int32_row = ptr_src + i * num_columns;
+        // int16_t *ptr_int16_row = ptr_dst + i * num_columns;
+    // int16_t scale_factor_int = static_cast<int16_t>(scale_factor);
+    for (uint32_t j = 0; j < num_rows*num_columns; j++) {
+        // ptr_int16_row[j] = static_cast<float>(ptr_int_row[j]) / scale_factor;
+        // int16_t rounded_src;
+        int16_t src = ptr_src[j];
+        // src *= scale_factor_int;
+        float rounding_value = (src > 0) ? 0.5f : -0.5f;
+        float value = static_cast<float>(src)/scale_factor + rounding_value;
+        if (value > 32767.0) {
+             value = 32767;
+        } else if (value < -32768.0) {
+            value = -32768;
+        }
+        value = static_cast<int16_t>(value);
+        ptr_dst[j] = value;
+    }
+}
