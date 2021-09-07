@@ -28,6 +28,12 @@ ie_generate_dev_package_config()
 # Add extra modules
 #
 
+#
+# Add python hasher in binary directory 
+#
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tools/sha256hash.py
+     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin/intel64/${CMAKE_BUILD_TYPE}/)
+
 function(register_extra_modules)
 # post export
 openvino_developer_export_targets(COMPONENT inference_engine TARGETS inference_engine)
