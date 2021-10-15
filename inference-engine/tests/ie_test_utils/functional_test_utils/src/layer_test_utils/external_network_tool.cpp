@@ -10,6 +10,7 @@ using namespace LayerTestsUtils;
 
 ExternalNetworkMode ExternalNetworkTool::mode = ExternalNetworkMode::DISABLED;
 const char *ExternalNetworkTool::modelsPath = "";
+const char *ExternalNetworkTool::modelNamePrefix = "network_";
 
 void ExternalNetworkTool::writeToHashMap(const std::string &network_name,
                                                 const std::string &hash) {
@@ -71,7 +72,7 @@ void ExternalNetworkTool::saveArkFile(const std::string &network_name,
             CommonTestUtils::createDirectory(arks_path);
         }
 
-        const std::string hashed_network_name = "network_" + generateHashName(network_name);
+        const std::string hashed_network_name = std::string(modelNamePrefix) + generateHashName(network_name);
         const std::string model_arks_path = arks_path + path_delimiter + hashed_network_name;
         if (!CommonTestUtils::directoryExists(model_arks_path)) {
             CommonTestUtils::createDirectory(model_arks_path);
@@ -110,7 +111,7 @@ void ExternalNetworkTool::saveArkFile(const std::string &network_name,
 void ExternalNetworkTool::dumpNetworkToFile(const std::shared_ptr<ngraph::Function> network,
                                             const std::string &network_name) {
     auto exportPathString = std::string(modelsPath);
-    auto hashed_network_name = "network_" + generateHashName(network_name);
+    auto hashed_network_name = std::string(modelNamePrefix) + generateHashName(network_name);
 
     std::string out_xml_path = exportPathString
                                 + (exportPathString.empty() ? "" : path_delimiter)
@@ -121,7 +122,7 @@ void ExternalNetworkTool::dumpNetworkToFile(const std::shared_ptr<ngraph::Functi
 
     // network->set_topological_sort(topological_name_sort<std::vector<std::shared_ptr<ov::Node>>>);
     ngraph::pass::Manager manager;
-    manager.register_pass<ngraph::pass::Serialize>(out_xml_path, out_bin_path);
+    manager.register_pass<ngraph::pass::Serialize>(out_xml_path, out_bin_path, ngraph::pass::Serialize::Version::IR_V10);
     manager.run_passes(network);
     // network->set_topological_sort(ngraph::topological_sort<std::vector<std::shared_ptr<ov::Node>>>);
     printf("Network dumped to %s\n", out_xml_path.c_str());
@@ -135,7 +136,7 @@ static ngraph::frontend::FrontEndManager& get_frontend_manager() {
 
 std::shared_ptr<ngraph::Function> ExternalNetworkTool::loadNetworkFromFile(const std::string &network_name) {
     auto importPathString = std::string(modelsPath);
-    auto hashed_network_name = "network_" + generateHashName(network_name);
+    auto hashed_network_name = std::string(modelNamePrefix) + generateHashName(network_name);
 
     std::string out_xml_path = importPathString
                                 + (importPathString.empty() ? "" : path_delimiter)
@@ -164,7 +165,7 @@ std::shared_ptr<ngraph::Function> ExternalNetworkTool::loadNetworkFromFile(const
 InferenceEngine::CNNNetwork ExternalNetworkTool::loadNetworkFromFile(const std::shared_ptr<InferenceEngine::Core> core,
                                                                      const std::string &network_name) {
     auto importPathString = std::string(modelsPath);
-    auto hashed_network_name = "network_" + generateHashName(network_name);
+    auto hashed_network_name = std::string(modelNamePrefix) + generateHashName(network_name);
 
     std::string out_xml_path = importPathString
                                 + (importPathString.empty() ? "" : path_delimiter)
@@ -176,4 +177,21 @@ InferenceEngine::CNNNetwork ExternalNetworkTool::loadNetworkFromFile(const std::
     auto network = core->ReadNetwork(out_xml_path, out_bin_path);
     printf("Network loaded from %s\n", out_xml_path.c_str());
     return network;
+}
+
+bool ExternalNetworkTool::needModelDumping() {
+    return (mode == ExternalNetworkMode::EXPORT ||
+            mode == ExternalNetworkMode::EXPORT_FAILED_ONLY ||
+            mode == ExternalNetworkMode::EXPORT_MODELS_ONLY);
+}
+
+bool ExternalNetworkTool::needInputDumping() {
+    return (mode == ExternalNetworkMode::EXPORT ||
+            mode == ExternalNetworkMode::EXPORT_FAILED_ONLY ||
+            mode == ExternalNetworkMode::EXPORT_ARKS_ONLY);
+}
+
+bool ExternalNetworkTool::needModelLoading() {
+    return (mode == ExternalNetworkMode::IMPORT ||
+            mode == ExternalNetworkMode::IMPORT_FAILED_ONLY);
 }

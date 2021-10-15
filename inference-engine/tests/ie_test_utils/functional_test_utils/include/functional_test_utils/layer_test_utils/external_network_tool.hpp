@@ -37,13 +37,16 @@ enum class ExternalNetworkMode {
     IMPORT,
     EXPORT,
     EXPORT_MODELS_ONLY,
-    EXPORT_ARKS_ONLY
+    EXPORT_ARKS_ONLY,
+    EXPORT_FAILED_ONLY,
+    IMPORT_FAILED_ONLY
 };
 
 class ExternalNetworkTool {
 private:
     static ExternalNetworkMode mode;
     static const char *modelsPath;
+    static const char *modelNamePrefix;
 
     template <typename T>
     static std::vector<std::shared_ptr<ov::Node>> topological_name_sort(T root_nodes);
@@ -78,10 +81,10 @@ protected:
 
 public:
     static void dumpNetworkToFile(const std::shared_ptr<ngraph::Function> network,
-                           const std::string &network_name);
+                                  const std::string &network_name);
 
     static InferenceEngine::CNNNetwork loadNetworkFromFile(const std::shared_ptr<InferenceEngine::Core> core,
-                                                    const std::string &network_name);
+                                                           const std::string &network_name);
 
     static std::shared_ptr<ngraph::Function> loadNetworkFromFile(const std::string &network_name);
 
@@ -96,13 +99,21 @@ public:
 
     static ExternalNetworkMode getMode() { return mode; }
 
-    static bool isMode(ExternalNetworkMode val) { return mode == val; }
+    static std::string getModelNamePrefix() { return std::string(modelNamePrefix); }
 
-    static void setModelsPath(std::string &val) {
-        modelsPath = val.c_str();
-    }
+    static void setModelsPath(std::string &val) { modelsPath = val.c_str(); }
 
     static void setMode(ExternalNetworkMode val) { mode = val; }
+
+    static void setModelNamePrefix(std::string val) { modelNamePrefix = val.c_str(); }
+
+    static bool isMode(ExternalNetworkMode val) { return mode == val; }
+
+    static bool needModelDumping();
+
+    static bool needInputDumping();
+
+    static bool needModelLoading();
 
     static std::string generateHashName(std::string value) {
         auto command = "python sha256hash.py " + value;

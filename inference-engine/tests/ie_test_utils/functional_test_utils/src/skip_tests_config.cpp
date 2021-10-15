@@ -7,6 +7,7 @@
 
 #include "common_test_utils/file_utils.hpp"
 #include "functional_test_utils/skip_tests_config.hpp"
+#include "functional_test_utils/layer_test_utils/external_network_tool.hpp"
 
 namespace FuncTestUtils {
 namespace SkipTestsConfig {
@@ -21,6 +22,12 @@ bool currentTestIsDisabled() {
         std::regex re(pattern);
         if (std::regex_match(fullName, re))
             skip_test = true;
+    }
+
+    // ExternalNetworkTool - Run only tests, that matche skip patterns
+    if (LayerTestsUtils::ENT::isMode(LayerTestsUtils::ENTMode::EXPORT_FAILED_ONLY) ||
+        LayerTestsUtils::ENT::isMode(LayerTestsUtils::ENTMode::IMPORT_FAILED_ONLY)) {
+            skip_test = !skip_test;
     }
     return skip_test && !disable_tests_skipping;
 }

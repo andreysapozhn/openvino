@@ -43,6 +43,10 @@ int main(int argc, char *argv[]) {
                 LayerTestsUtils::ExternalNetworkTool::setMode(LayerTestsUtils::ExternalNetworkMode::EXPORT_MODELS_ONLY);
             } else if (mode == "EXPORT_ARKS_ONLY") {
                 LayerTestsUtils::ExternalNetworkTool::setMode(LayerTestsUtils::ExternalNetworkMode::EXPORT_ARKS_ONLY);
+            } else if (mode == "EXPORT_FAILED_ONLY") {
+                LayerTestsUtils::ExternalNetworkTool::setMode(LayerTestsUtils::ExternalNetworkMode::EXPORT_FAILED_ONLY);
+            } else if (mode == "IMPORT_FAILED_ONLY") {
+                LayerTestsUtils::ExternalNetworkTool::setMode(LayerTestsUtils::ExternalNetworkMode::IMPORT_FAILED_ONLY);
             } else {
                 throw std::runtime_error("Incorrect value of \"--external_network_mode\" argument");
             }

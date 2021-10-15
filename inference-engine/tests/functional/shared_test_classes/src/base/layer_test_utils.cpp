@@ -379,14 +379,16 @@ void LayerTestsCommon::ConfigureNetwork() {
 }
 
 void LayerTestsCommon::LoadNetwork() {
+    // for (auto node : function->get_ordered_ops()) {
+    //     node->get_friendly_name();
+    // }
     // External Network Tool
-    if (ENT::isMode(ENTMode::EXPORT) ||
-        ENT::isMode(ENTMode::EXPORT_MODELS_ONLY)) {
+    if (ENT::needModelDumping()) {
         std::string testName = GetTestCaseName() + "_" + GetTestName();
         ENT::dumpNetworkToFile(function, testName);
     }
 
-    if (ENT::isMode(ENTMode::IMPORT)) {
+    if (ENT::needModelLoading()) {
         std::string testName = GetTestCaseName() + "_" + GetTestName();
         function = ENT::loadNetworkFromFile(testName);
     }
@@ -424,8 +426,8 @@ void LayerTestsCommon::GenerateInputs() {
             blob = GenerateInput(*info);
         }
 
-        if (ENT::isMode(ENTMode::EXPORT) ||
-            ENT::isMode(ENTMode::EXPORT_ARKS_ONLY)) {
+        // Dump input data with External Network Tool
+        if (ENT::needInputDumping()) {
             std::string network_name = GetTestCaseName() + "_" + GetTestName();
             uint32_t ir_id = functionParams.size() - 1 - i;  // topological sort dependency!
             ENT::saveArkFile(network_name, info, blob, ir_id);

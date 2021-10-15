@@ -78,6 +78,29 @@ std::vector<std::string> disabledTestPatterns() {
         standardPatterns.insert(std::end(standardPatterns),
                                 std::begin(loadingPatterns),
                                 std::end(loadingPatterns));
+        return standardPatterns;
+    }
+
+    if (LayerTestsUtils::ENT::isMode(LayerTestsUtils::ENTMode::EXPORT_FAILED_ONLY)) {
+        std::sort(standardPatterns.begin(), standardPatterns.end());
+        std::sort(serializationPatterns.begin(), serializationPatterns.end());
+        std::vector<std::string> failedPatterns {};
+        std::set_difference(
+            standardPatterns.begin(), standardPatterns.end(),
+            serializationPatterns.begin(), serializationPatterns.end(),
+            std::back_inserter(failedPatterns));
+        return failedPatterns;
+    }
+
+    if (LayerTestsUtils::ENT::isMode(LayerTestsUtils::ENTMode::IMPORT_FAILED_ONLY)) {
+        std::sort(standardPatterns.begin(), standardPatterns.end());
+        std::sort(loadingPatterns.begin(), loadingPatterns.end());
+        std::vector<std::string> failedPatterns {};
+        std::set_difference(
+            standardPatterns.begin(), standardPatterns.end(),
+            loadingPatterns.begin(), loadingPatterns.end(),
+            std::back_inserter(failedPatterns));
+        return failedPatterns;
     }
 
     return standardPatterns;
